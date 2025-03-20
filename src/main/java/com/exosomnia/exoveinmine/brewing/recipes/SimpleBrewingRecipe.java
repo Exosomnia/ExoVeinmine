@@ -6,8 +6,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraftforge.common.brewing.IBrewingRecipe;
+import net.minecraftforge.common.brewing.VanillaBrewingRecipe;
 
-public class SimpleBrewingRecipe implements IBrewingRecipe {
+public class SimpleBrewingRecipe extends VanillaBrewingRecipe {
 
     private final Potion potion;
     private final Item ingredient;

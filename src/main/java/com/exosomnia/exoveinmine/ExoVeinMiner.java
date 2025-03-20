@@ -69,7 +69,7 @@ public class ExoVeinMiner
 
     public void setupEvent(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            BrewingRecipeRegistry.addRecipe(new SimpleBrewingRecipe(Potions.AWKWARD, Items.AMETHYST_SHARD, RegistrationHandler.POTION_VEIN_MINER.get()));
+            BrewingRecipeRegistry.addRecipe(new SimpleBrewingRecipe(Potions.AWKWARD, Items.GLOW_BERRIES, RegistrationHandler.POTION_VEIN_MINER.get()));
             //BrewingRecipeRegistry.addRecipe(new SimpleBrewingRecipe(RegistrationHandler.POTION_VEIN_MINER.get(), Items.GLOWSTONE_DUST, RegistrationHandler.POTION_VEIN_MINER_STRONG.get())); //Didn't feel like this fit in well.
             BrewingRecipeRegistry.addRecipe(new SimpleBrewingRecipe(RegistrationHandler.POTION_VEIN_MINER.get(), Items.REDSTONE, RegistrationHandler.POTION_VEIN_MINER_EXTENDED.get()));
         });
