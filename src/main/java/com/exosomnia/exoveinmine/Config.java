@@ -23,11 +23,11 @@ public class Config
 
     private static final ForgeConfigSpec.DoubleValue MAX_CHARGE = BUILDER
             .comment("Max charge value for vein miner's charge.")
-            .defineInRange("maxCharge", 650.0, 0.0, Integer.MAX_VALUE);
+            .defineInRange("maxCharge", 200.0, 0.0, Integer.MAX_VALUE);
 
     private static final ForgeConfigSpec.DoubleValue DEFAULT_INCREMENT = BUILDER
             .comment("Default value increments for vein mining.")
-            .defineInRange("defaultIncrement", 25.0, 0.0, Integer.MAX_VALUE);
+            .defineInRange("defaultIncrement", 6.25, 0.0, Integer.MAX_VALUE);
 
     private static final ForgeConfigSpec.DoubleValue CHARGE_MOD = BUILDER
             .comment("Mod value for charge rate.")
@@ -37,6 +37,10 @@ public class Config
             .comment("Entity tag string to allow for vein mining")
             .define("tagName", "exoveinmine");
 
+    public static final ForgeConfigSpec.ConfigValue<String> TAG_NAME_ENHANCED = BUILDER
+            .comment("Entity tag string to allow for enhanced vein mining")
+            .define("tagNameEnhanced", "exoveinmine-enhanced");
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean enableEnchant;
@@ -45,6 +49,7 @@ public class Config
     public static float defaultIncrement;
     public static float chargeMod;
     public static String tagName;
+    public static String tagNameEnhanced;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
@@ -54,6 +59,7 @@ public class Config
         defaultIncrement = DEFAULT_INCREMENT.get().floatValue();
         chargeMod = CHARGE_MOD.get().floatValue();
         tagName = TAG_NAME.get();
+        tagNameEnhanced = TAG_NAME_ENHANCED.get();
     }
 
     static void loadInitConfig() {

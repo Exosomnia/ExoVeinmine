@@ -26,7 +26,7 @@ public class BlockBreakEventHandler {
                 (Config.enableEnchant && player.getMainHandItem().getEnchantmentLevel(RegistrationHandler.VEIN_MINER_ENCHANTMENT.get()) > 0))  {
 
             ExoVeinMiner.VEIN_MINER_MANAGER.createController(playerUUID, new VeinMinerController(player,
-                    event.getState().getBlock(), player.getMainHandItem(), player.level(), event.getPos()));
+                    event.getState().getBlock(), player.getMainHandItem(), player.serverLevel(), event.getPos()));
         }
     }
 }

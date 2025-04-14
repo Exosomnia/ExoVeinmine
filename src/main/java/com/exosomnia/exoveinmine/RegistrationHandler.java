@@ -32,13 +32,13 @@ public class RegistrationHandler {
     public static final RegistryObject<Attribute> VEIN_MINER_EFFICIENCY = ATTRIBUTES.register("vein_miner_efficiency",
             () -> new RangedAttribute("attribute.exoveinminer.vein_miner_efficiency",
                     1.0,
-                    0.0385,
-                    1000.0));
+                    1.0,
+                    2.0));
     public static final RegistryObject<Attribute> VEIN_MINER_CHARGE = ATTRIBUTES.register("vein_miner_charge",
             () -> new RangedAttribute("attribute.exoveinminer.vein_miner_charge",
                     1.0,
                     0.0,
-                    100.0));
+                    1000.0));
 
 
     public static final DeferredRegister<MobEffect> MOB_EFFECTS = DeferredRegister.create(ForgeRegistries.MOB_EFFECTS,

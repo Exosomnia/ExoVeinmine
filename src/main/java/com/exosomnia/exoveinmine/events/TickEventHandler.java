@@ -19,7 +19,7 @@ public class TickEventHandler {
 
     @SubscribeEvent
     public static void playerTickEvent(TickEvent.PlayerTickEvent event) {
-        if (event.side == LogicalSide.SERVER) {
+        if (event.side == LogicalSide.SERVER && event.phase.equals(TickEvent.Phase.START)) {
             ServerPlayer eventPlayer = (ServerPlayer)event.player;
             boolean actionsActive = ExoVeinMiner.VEIN_MINER_MANAGER.processControllers(eventPlayer.getUUID());
             if (playerTickCount++ % 20 == 0 && !actionsActive) {

@@ -26,4 +26,13 @@ public class PlayerEventHandler {
     public static void playerLoggedOutEvent(PlayerEvent.PlayerLoggedOutEvent event){
         ExoVeinMiner.VEIN_MINER_MANAGER.removePlayer(event.getEntity().getUUID());
     }
+
+    @SubscribeEvent
+    public static void playerChangedDimensions(PlayerEvent.PlayerChangedDimensionEvent event){
+        ServerPlayer player = (ServerPlayer)event.getEntity();
+        player.getCapability(VeinMinerProvider.VEIN_MINER).ifPresent(data -> {
+            VeinMinerChargePacket packet = new VeinMinerChargePacket(data.getCharge());
+            PacketHandler.sendToPlayer(packet, player);
+        });
+    }
 }
