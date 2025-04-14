@@ -21,8 +21,8 @@
     "item.minecraft.tipped_arrow.effect.potion_mining_proficiency_strong": "Arrow of Mining",
     "item.minecraft.tipped_arrow.effect.potion_mining_proficiency_extended": "Arrow of Mining",
 
-    "enchantment.exoveinminer.enchantment_vein_miner": "Vein Miner",
-    "enchantment.exoveinminer.enchantment_vein_miner.description": "Allows access to vein mining with the tool",
+    "enchantment.exoveinminer.vein_miner": "Vein Miner",
+    "enchantment.exoveinminer.vein_miner.description": "Allows access to vein mining with the tool. At 2nd level, drops from vein mining are given to the player directly",
 
     "key.categories.exoveinminer": "Vein Miner",
     "key.exoveinminer.activate": "Activate Vein Miner"

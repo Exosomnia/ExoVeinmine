@@ -74,7 +74,7 @@ public class RegistrationHandler {
     public static final DeferredRegister<Enchantment> ENCHANTMENTS = DeferredRegister.create(ForgeRegistries.ENCHANTMENTS,
             ExoVeinMiner.MODID);
 
-    public static RegistryObject<Enchantment> VEIN_MINER_ENCHANTMENT = ENCHANTMENTS.register("enchantment_vein_miner", EnchantmentVeinMiner::new);
+    public static RegistryObject<Enchantment> VEIN_MINER_ENCHANTMENT = ENCHANTMENTS.register("vein_miner", EnchantmentVeinMiner::new);
 
 
     public static final KeyMapping ACTIVATE = new KeyMapping("key.exoveinminer.activate", KeyConflictContext.IN_GAME,

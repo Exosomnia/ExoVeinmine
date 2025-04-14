@@ -11,6 +11,11 @@ public class EnchantmentVeinMiner extends Enchantment {
     }
 
     @Override
+    public int getMaxLevel() {
+        return 2;
+    }
+
+    @Override
     public boolean isTreasureOnly() {
         return true;
     }
