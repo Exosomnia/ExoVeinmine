@@ -1,6 +1,6 @@
 package com.exosomnia.exoveinmine.networking;
 
-import com.exosomnia.exoveinmine.ExoVeinMiner;
+import com.exosomnia.exoveinmine.ExoVeinMine;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerActivePacket;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerChargePacket;
 import net.minecraft.resources.ResourceLocation;
@@ -13,7 +13,7 @@ public class PacketHandler {
 
     private static final String PROTOCOL_VERSION = "1";
     private static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(ExoVeinMiner.MODID, "main"),
+            ResourceLocation.fromNamespaceAndPath(ExoVeinMine.MODID, "main"),
             () -> PROTOCOL_VERSION,
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals

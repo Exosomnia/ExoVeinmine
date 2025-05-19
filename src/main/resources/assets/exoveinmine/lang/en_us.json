@@ -1,0 +1,29 @@
+{
+    "attribute.exoveinmine.vein_miner_efficiency": "Vein Miner Efficiency",
+    "attribute.exoveinmine.vein_miner_charge": "Vein Miner Charge",
+
+    "effect.exoveinmine.effect_vein_miner": "Vein Miner ↑",
+    "effect.exoveinmine.effect_vein_miner.description": "Increases vein miner's charge rate, and charge usage efficiency",
+
+    "item.minecraft.potion.effect.potion_vein_miner": "Potion of Mining",
+    "item.minecraft.potion.effect.potion_vein_miner_strong": "Potion of Mining",
+    "item.minecraft.potion.effect.potion_vein_miner_extended": "Potion of Mining",
+
+    "item.minecraft.splash_potion.effect.potion_vein_miner": "Splash Potion of Mining",
+    "item.minecraft.splash_potion.effect.potion_vein_miner_strong": "Splash Potion of Mining",
+    "item.minecraft.splash_potion.effect.potion_vein_miner_extended": "Splash Potion of Mining",
+
+    "item.minecraft.lingering_potion.effect.potion_vein_miner": "Lingering Potion of Mining",
+    "item.minecraft.lingering_potion.effect.potion_vein_miner_strong": "Lingering Potion of Mining",
+    "item.minecraft.lingering_potion.effect.potion_vein_miner_extended": "Lingering Potion of Mining",
+
+    "item.minecraft.tipped_arrow.effect.potion_vein_miner": "Arrow of Mining",
+    "item.minecraft.tipped_arrow.effect.potion_vein_miner_strong": "Arrow of Mining",
+    "item.minecraft.tipped_arrow.effect.potion_vein_miner_extended": "Arrow of Mining",
+
+    "enchantment.exoveinmine.vein_miner": "Vein Miner",
+    "enchantment.exoveinmine.vein_miner.description": "Allows access to vein mining with the tool. At 2nd level, drops from vein mining are given to the player directly",
+
+    "key.categories.exoveinmine": "Vein Miner",
+    "key.exoveinmine.activate": "Activate Vein Miner"
+}

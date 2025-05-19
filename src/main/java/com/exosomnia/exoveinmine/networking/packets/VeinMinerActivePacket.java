@@ -1,6 +1,6 @@
 package com.exosomnia.exoveinmine.networking.packets;
 
-import com.exosomnia.exoveinmine.ExoVeinMiner;
+import com.exosomnia.exoveinmine.ExoVeinMine;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -29,7 +29,7 @@ public class VeinMinerActivePacket {
             NetworkDirection packetDirection = context.get().getDirection();
             if (packetDirection.equals(NetworkDirection.PLAY_TO_SERVER)) {
                 ServerPlayer player = context.get().getSender();
-                if (player != null) { ExoVeinMiner.VEIN_MINER_MANAGER.setPlayerActive(player.getUUID(), packet.active); }
+                if (player != null) { ExoVeinMine.VEIN_MINER_MANAGER.setPlayerActive(player.getUUID(), packet.active); }
             }
         });
         context.get().setPacketHandled(true);

@@ -14,8 +14,8 @@ public class VeinMinerEffect extends MobEffect {
         super(typeIn, liquidColorIn);
 
         this.addAttributeModifier(RegistrationHandler.VEIN_MINER_EFFICIENCY.get(),
-                EFFICIENCY_UUID, 0.2, AttributeModifier.Operation.MULTIPLY_TOTAL);
+                EFFICIENCY_UUID, 0.25, AttributeModifier.Operation.MULTIPLY_TOTAL);
         this.addAttributeModifier(RegistrationHandler.VEIN_MINER_CHARGE.get(),
-                CHARGE_UUID, 0.2, AttributeModifier.Operation.MULTIPLY_TOTAL);
+                CHARGE_UUID, 0.25, AttributeModifier.Operation.MULTIPLY_TOTAL);
     }
 }

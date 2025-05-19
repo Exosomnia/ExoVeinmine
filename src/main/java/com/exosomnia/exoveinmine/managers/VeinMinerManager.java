@@ -17,17 +17,17 @@ public class VeinMinerManager {
         return players.get(uuid);
     }
 
-    public void addPlayer(UUID uuid) {
+    public void addPlayerTracking(UUID uuid) {
         players.put(uuid, false);
         actions.put(uuid, new ArrayList<>());
     }
 
-    public void removePlayer(UUID uuid) {
+    public void removePlayerTracking(UUID uuid) {
         players.remove(uuid);
         actions.remove(uuid);
     }
 
-    public void createController(UUID uuid, VeinMinerController controller) {
+    public void addController(UUID uuid, VeinMinerController controller) {
         actions.get(uuid).add(controller);
     }
 
@@ -36,7 +36,7 @@ public class VeinMinerManager {
         List<VeinMinerController> playerControllers = actions.get(uuid);
         if (playerControllers == null || playerControllers.isEmpty()) return false;
 
-        playerControllers.removeIf(VeinMinerController::iterate);
+        playerControllers.removeIf(controller -> !controller.iterate());
         return true;
     }
 }

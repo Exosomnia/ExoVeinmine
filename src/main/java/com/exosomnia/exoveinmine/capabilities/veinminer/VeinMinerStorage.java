@@ -1,29 +1,30 @@
 package com.exosomnia.exoveinmine.capabilities.veinminer;
 
+import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
 
 public class VeinMinerStorage implements IVeinMinerStorage {
 
-    private float charge;
+    private double charge;
 
-    public VeinMinerStorage(float charge) {
+    public VeinMinerStorage(double charge) {
         setCharge(charge);
     }
 
     @Override
-    public void setCharge(float amount) { charge = Math.min(amount, MAX_CHARGE); }
+    public void setCharge(double amount) { charge = Math.min(amount, MAX_CHARGE); }
 
     @Override
-    public float getCharge() { return charge; }
+    public double getCharge() { return charge; }
 
     @Override
     public boolean isMax() { return charge >= MAX_CHARGE; }
 
     @Override
-    public FloatTag serializeNBT() { return FloatTag.valueOf(charge); }
+    public DoubleTag serializeNBT() { return DoubleTag.valueOf(charge); }
 
     @Override
-    public void deserializeNBT(FloatTag nbt) {
-        charge = nbt.getAsFloat();
+    public void deserializeNBT(DoubleTag nbt) {
+        charge = nbt.getAsDouble();
     }
 }
