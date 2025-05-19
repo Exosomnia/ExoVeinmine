@@ -43,7 +43,7 @@ public class Config implements SynchronizableConfig {
 
     private static final ForgeConfigSpec.DoubleValue RECHARGE_AMOUNT = BUILDER
             .comment("Amount of charge regenerated a second.")
-            .defineInRange("rechargeAmount", 1.25, 0.0, Double.MAX_VALUE);
+            .defineInRange("rechargeAmount", 1.5625, 0.0, Double.MAX_VALUE);
 
     private static final ForgeConfigSpec.ConfigValue<String> TAG_NAME = BUILDER
             .comment("Entity tag string to allow for vein mining")
