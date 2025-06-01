@@ -26,12 +26,12 @@ public class RegistrationHandler {
             () -> new RangedAttribute("attribute.exoveinmine.vein_miner_efficiency",
                     1.0,
                     Double.MIN_VALUE,
-                    1000.0));
+                    1000.0).setSyncable(true));
     public static final RegistryObject<Attribute> VEIN_MINER_CHARGE = ATTRIBUTES.register("vein_miner_charge",
             () -> new RangedAttribute("attribute.exoveinmine.vein_miner_charge",
                     1.0,
                     0.0,
-                    1000.0));
+                    1000.0).setSyncable(true));
 
 
     public static final DeferredRegister<MobEffect> MOB_EFFECTS = DeferredRegister.create(ForgeRegistries.MOB_EFFECTS,
@@ -72,8 +72,8 @@ public class RegistrationHandler {
     public static void register() {
         ATTRIBUTES.register(FMLJavaModLoadingContext.get().getModEventBus());
         MOB_EFFECTS.register(FMLJavaModLoadingContext.get().getModEventBus());
-        if (Config.enablePotions) { POTIONS.register(FMLJavaModLoadingContext.get().getModEventBus()); }
-        if (Config.enableEnchant) { ENCHANTMENTS.register(FMLJavaModLoadingContext.get().getModEventBus()); }
+        POTIONS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        ENCHANTMENTS.register(FMLJavaModLoadingContext.get().getModEventBus());
         //SOUNDS.register(FMLJavaModLoadingContext.get().getModEventBus()); //Removed all sounds from the mod as they were more annoying than anything.
     }
 }

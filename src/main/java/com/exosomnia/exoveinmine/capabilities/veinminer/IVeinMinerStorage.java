@@ -1,13 +1,9 @@
 package com.exosomnia.exoveinmine.capabilities.veinminer;
 
-import com.exosomnia.exoveinmine.Config;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraftforge.common.util.INBTSerializable;
 
 public interface IVeinMinerStorage extends INBTSerializable<DoubleTag> {
-
-    double MAX_CHARGE = Config.maxCharge;
-    double CHARGE_PER_BLOCK = Config.chargePerBlock;
 
     /**
      * Sets the specified amount to the player's vein miner charge.

@@ -1,10 +1,3 @@
-# If true, vein mining (and the enhanced version) can be access even without the enchantment or tag
-# (Needs to be enabled on client and server). If this is true, the vein mining enchantment is auto
-# disabled.
-globalEnabled=false
-# If true, the vein mining enchantment is enabled
-enableEnchant=true
-# If true, the vein mining enchantment is a treasure-only enchantment
-treasureEnchant=true
-# If true, Vein mining potions are enabled
-enablePotions=true
+# This file is no longer relevant, but keeping it since code may be reused
+# Also, not sure if this was pushed to the repo.
+testValue=false

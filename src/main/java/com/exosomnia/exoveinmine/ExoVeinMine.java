@@ -31,18 +31,21 @@ public class ExoVeinMine
     public static final VeinMinerManager VEIN_MINER_MANAGER = new VeinMinerManager();
 
     public ExoVeinMine() {
+        Config config = new Config();
+        config.loadInitConfig();
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-        Config.loadInitConfig();
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setupEvent);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::attributeModifyEvent);
 
-        MinecraftForge.EVENT_BUS.register(this);
-
         PacketHandler.register();
         RegistrationHandler.register();
 
-        ExoLib.CONFIG_SYNCHRONIZER.addConfig(new Config());
+        ExoLib.CONFIG_SYNCHRONIZER.addConfig(config);
+
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(config::onLoad);
+        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.addListener(config::tagsUpdated);
     }
 
     @SubscribeEvent

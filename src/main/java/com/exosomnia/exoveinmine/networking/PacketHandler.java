@@ -2,6 +2,7 @@ package com.exosomnia.exoveinmine.networking;
 
 import com.exosomnia.exoveinmine.ExoVeinMine;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerActivePacket;
+import com.exosomnia.exoveinmine.networking.packets.VeinMinerBreakPacket;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerChargePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +25,7 @@ public class PacketHandler {
 
         INSTANCE.registerMessage(id++, VeinMinerChargePacket.class, VeinMinerChargePacket::encode, VeinMinerChargePacket::new, VeinMinerChargePacket::handle);
         INSTANCE.registerMessage(id++, VeinMinerActivePacket.class, VeinMinerActivePacket::encode, VeinMinerActivePacket::new, VeinMinerActivePacket::handle);
+        INSTANCE.registerMessage(id++, VeinMinerBreakPacket.class, VeinMinerBreakPacket::encode, VeinMinerBreakPacket::new, VeinMinerBreakPacket::handle);
     }
 
     public static void sendToPlayer(Object packet, ServerPlayer player) {

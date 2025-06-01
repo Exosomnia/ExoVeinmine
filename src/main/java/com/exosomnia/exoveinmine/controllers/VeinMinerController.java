@@ -7,6 +7,7 @@ import com.exosomnia.exoveinmine.capabilities.veinminer.VeinMinerProvider;
 import com.exosomnia.exoveinmine.capabilities.veinminer.VeinMinerStorage;
 import com.exosomnia.exoveinmine.events.VeinMiningBreakEvent;
 import com.exosomnia.exoveinmine.networking.PacketHandler;
+import com.exosomnia.exoveinmine.networking.packets.VeinMinerBreakPacket;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerChargePacket;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
@@ -14,13 +15,17 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
@@ -30,6 +35,7 @@ import java.util.*;
 
 public class VeinMinerController {
 
+    private static final double VISUAL_EFFECT_RANGE = 32.0 * 32.0;
     private static final Vec3i[] SEARCH_POSITIONS = new Vec3i[]{
             //Search positions in order of distance (1 block distance > 2 > 3)
             new Vec3i(-1,0,0),
@@ -75,6 +81,9 @@ public class VeinMinerController {
     private int iterationsLeft;
     private int maxBlocksPerIteration;
 
+    private final ObjectArrayList<ItemStack> drops = new ObjectArrayList<>();
+    private final List<BlockPos> brokenThisOrigin = new ArrayList<>();
+
     //Variables that are set before the beginning of each iteration
     boolean isEnhanced;
     boolean isCreative;
@@ -82,8 +91,9 @@ public class VeinMinerController {
     double chargePenalty;
     int fortuneLevel = 0;
     int silkTouchLevel = 0;
+    LootParams.Builder lootParams;
 
-    private record IterationResult(boolean shouldContinue, ObjectArrayList<ItemStack> drops, int exp){}
+    private record IterationResult(boolean shouldContinue, int exp){}
 
     public VeinMinerController(ServerPlayer player, Block block, ItemStack item, ServerLevel level, BlockPos position) {
         this.player = player;
@@ -104,7 +114,6 @@ public class VeinMinerController {
      * @return true if iteration should continue, false otherwise.
      */
     public boolean iterate() {
-        //Initial verifications, and iteration setup
         IVeinMinerStorage data = player.getCapability(VeinMinerProvider.VEIN_MINER).resolve().orElse(new VeinMinerStorage(0.0));
         if (!setupIteration(data)) return false;
 
@@ -112,13 +121,22 @@ public class VeinMinerController {
         blocksToSearch.addAll(blocksNextSearch);
         blocksNextSearch.clear();
 
-        if (isEnhanced) {
-            result.drops.forEach(drop -> Block.popResource(level, player.blockPosition(), drop));
+        if (isEnhanced && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !level.restoringBlockSnapshots) {
+            Vec3 playerPos = player.position();
+            drops.forEach(drop -> {
+                if (!drop.isEmpty()) {
+                    ItemEntity dropEntity = new ItemEntity(level, playerPos.x, playerPos.y + EntityType.ITEM.getHeight(), playerPos.z, drop);
+                    dropEntity.setPickUpDelay(3);
+                    level.addFreshEntity(dropEntity);
+                }
+            });
             ExperienceOrb.award(level, player.position(), result.exp);
         }
 
-        data.setCharge(currentCharge);
-        PacketHandler.sendToPlayer(new VeinMinerChargePacket((float)currentCharge), player);
+        if (Config.enableCharge) {
+            data.setCharge(currentCharge);
+            PacketHandler.sendToPlayer(new VeinMinerChargePacket((float) currentCharge), player);
+        }
         return result.shouldContinue;
     }
 
@@ -133,8 +151,11 @@ public class VeinMinerController {
         if (!(iterationsLeft-- > 0 && (!blocksToSearch.isEmpty() || remainingPos != null) && !player.isRemoved())) return false;
 
         currentCharge = data.getCharge();
-        chargePenalty = Math.min(Double.MAX_VALUE, data.CHARGE_PER_BLOCK * (1.0 / player.getAttributeValue(RegistrationHandler.VEIN_MINER_EFFICIENCY.get())));
-        if (currentCharge < chargePenalty) return false;
+        chargePenalty = 0.0;
+        if (Config.enableCharge) {
+            chargePenalty = Math.min(Double.MAX_VALUE, Config.chargePerBlock * (1.0 / player.getAttributeValue(RegistrationHandler.VEIN_MINER_EFFICIENCY.get())));
+            if (currentCharge < chargePenalty) return false;
+        }
 
         //If we started the action with an item, but now it's gone, return false.
         if (item.isEmpty()) {
@@ -149,7 +170,10 @@ public class VeinMinerController {
         }
 
         isCreative = player.gameMode.getGameModeForPlayer().equals(GameType.CREATIVE);
-        isEnhanced = Config.globalEnable || player.getTags().contains(Config.tagNameEnhanced) || (Config.enableEnchant && item.getEnchantmentLevel(RegistrationHandler.VEIN_MINER_ENCHANTMENT.get()) > 1);
+        isEnhanced = Config.globalEnhanced ||
+                     player.getTags().contains(Config.tagNameEnhanced) ||
+                     (Config.enableEnchant && item.getEnchantmentLevel(RegistrationHandler.VEIN_MINER_ENCHANTMENT.get()) >= RegistrationHandler.VEIN_MINER_ENCHANTMENT.get().getMaxLevel());
+        lootParams = new LootParams.Builder(level).withParameter(LootContextParams.TOOL, item).withOptionalParameter(LootContextParams.THIS_ENTITY, player).withLuck(player.getLuck());
 
         return true;
     }
@@ -160,13 +184,17 @@ public class VeinMinerController {
      */
     private IterationResult processIteration() {
         //Used for the enhanced tag, will drop all items at the player instead of at the actual block
-        ObjectArrayList<ItemStack> drops = new ObjectArrayList<>();
+        drops.clear();
         int exp = 0;
 
+        //If we have a remaining position from last iteration, resume iterating from that position.
         BlockPos originPos = remainingPos == null ? blocksToSearch.removeFirst() : remainingPos;
         remainingPos = null;
+
         int blocksLeft = maxBlocksPerIteration;
         while (originPos != null) {
+            brokenThisOrigin.clear();
+
             for (Vec3i offset : SEARCH_POSITIONS) {
                 BlockPos searchPos = originPos.offset(offset);
                 if (blocksSearched.contains(searchPos)) continue;
@@ -176,9 +204,9 @@ public class VeinMinerController {
                 if (!searchState.is(block)) continue;
 
                 //If the item stack that initiated this vein mine doesn't have enough durability left, stop the action.
-                if ((!isCreative) && (item.hurt(1, level.random, player))) {
+                if ((!isCreative) && (item.hurt(Config.durabilityDamage, level.random, player))) {
                     item.setDamageValue(item.getMaxDamage() - 1);
-                    return new IterationResult(false, drops, exp);
+                    return new IterationResult(false, exp);
                 }
 
                 VeinMiningBreakEvent event = new VeinMiningBreakEvent(level, searchPos, searchState, player);
@@ -189,27 +217,43 @@ public class VeinMinerController {
                 currentCharge -= chargePenalty;
                 BlockEntity searchBlockEntity = searchState.hasBlockEntity() ? level.getBlockEntity(searchPos) : null;
                 player.awardStat(Stats.BLOCK_MINED.get(block));
-                player.causeFoodExhaustion(0.005F);
-                if (searchState.canHarvestBlock(level, searchPos, player)) {
+                player.causeFoodExhaustion(Config.exhaustionAmount);
+                if (!searchState.requiresCorrectToolForDrops() || item.isCorrectToolForDrops(searchState)) {
                     if (isEnhanced) {
-                        LootParams.Builder lootParams = (new LootParams.Builder(level)).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(searchPos)).withParameter(LootContextParams.TOOL, item).withOptionalParameter(LootContextParams.THIS_ENTITY, player).withOptionalParameter(LootContextParams.BLOCK_ENTITY, searchBlockEntity).withLuck(player.getLuck());
-                        drops.addAll(searchState.getDrops(lootParams));
+                        drops.addAll(searchState.getDrops(lootParams.withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(searchPos)).withOptionalParameter(LootContextParams.BLOCK_ENTITY, searchBlockEntity)));
                         exp += searchState.getExpDrop(level, level.random, searchPos, fortuneLevel, silkTouchLevel);
                     } else {
                         Block.dropResources(searchState, level, searchPos, searchBlockEntity, player, item, true);
                     }
                 }
-                level.destroyBlock(searchPos, false);
-                blocksNextSearch.add(searchPos);
+                if (level.removeBlock(searchPos, false)) {
+                    level.gameEvent(GameEvent.BLOCK_DESTROY, searchPos, GameEvent.Context.of(player, searchState));
+                }
+                brokenThisOrigin.add(searchPos);
 
-                if (currentCharge < chargePenalty) return new IterationResult(false, drops, exp);
+                if (currentCharge < chargePenalty) return new IterationResult(false, exp);
                 else if (--blocksLeft <= 0) {
+                    //Handle Effects
+                    if (!Config.disableEffects) sendVisualEffects(originPos, brokenThisOrigin);
+
+                    blocksNextSearch.addAll(brokenThisOrigin);
                     remainingPos = originPos;
-                    return new IterationResult(true, drops, exp);
+                    return new IterationResult(true, exp);
                 }
             }
+            //Handle Effects
+            if (!Config.disableEffects) sendVisualEffects(originPos, brokenThisOrigin);
+
+            blocksNextSearch.addAll(brokenThisOrigin);
             originPos = blocksToSearch.isEmpty() ? null : blocksToSearch.removeFirst();
         }
-        return new IterationResult(!blocksNextSearch.isEmpty(), drops, exp);
+        return new IterationResult(!blocksNextSearch.isEmpty(), exp);
+    }
+
+    private void sendVisualEffects(BlockPos origin, List<BlockPos> positions) {
+        VeinMinerBreakPacket packet = new VeinMinerBreakPacket(Block.getId(block.defaultBlockState()), origin, positions);
+        for (ServerPlayer player : level.players()) {
+            if (player.distanceToSqr(origin.getCenter()) < VISUAL_EFFECT_RANGE) PacketHandler.sendToPlayer(packet, player);
+        }
     }
 }

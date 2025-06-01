@@ -1,4 +1,7 @@
 {
+    "gui.exoveinmine.charge_amount": "Charge: %s blocks",
+    "gui.exoveinmine.charge_rate": "Rate: %s blocks/sec",
+
     "attribute.exoveinmine.vein_miner_efficiency": "Vein Miner Efficiency",
     "attribute.exoveinmine.vein_miner_charge": "Vein Miner Charge",
 

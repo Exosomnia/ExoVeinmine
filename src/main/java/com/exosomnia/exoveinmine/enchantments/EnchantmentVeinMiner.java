@@ -13,11 +13,21 @@ public class EnchantmentVeinMiner extends Enchantment {
 
     @Override
     public int getMaxLevel() {
-        return 2;
+        return Config.globalEnable && Config.enableEnchant ? 1 : 2;
     }
 
     @Override
     public boolean isTreasureOnly() {
         return Config.treasureEnchant;
+    }
+
+    @Override
+    public boolean isTradeable() {
+        return Config.tradeableEnchant;
+    }
+
+    @Override
+    public boolean isDiscoverable() {
+        return Config.enableEnchant;
     }
 }
