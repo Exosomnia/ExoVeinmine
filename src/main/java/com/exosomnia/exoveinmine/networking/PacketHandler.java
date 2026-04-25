@@ -1,38 +1,44 @@
 package com.exosomnia.exoveinmine.networking;
 
-import com.exosomnia.exoveinmine.ExoVeinMine;
+import com.exosomnia.exolib.networking.packets.ParticleShapePacket;
+import com.exosomnia.exolib.networking.packets.SynchronizeConfigPacket;
+import com.exosomnia.exolib.networking.packets.TagUpdatePacket;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerActivePacket;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerBreakPacket;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerChargePacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+
 
 public class PacketHandler {
 
-    private static final String PROTOCOL_VERSION = "1";
-    private static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            ResourceLocation.fromNamespaceAndPath(ExoVeinMine.MODID, "main"),
-            () -> PROTOCOL_VERSION,
-            PROTOCOL_VERSION::equals,
-            PROTOCOL_VERSION::equals
-    );
+    public static void register(PayloadRegistrar registrar) {
+        registrar.playToClient(
+                VeinMinerChargePacket.TYPE,
+                VeinMinerChargePacket.STREAM_CODEC,
+                VeinMinerChargePacket::handle
+        );
 
-    public static void register() {
-        int id = 0;
+        registrar.playToServer(
+                VeinMinerActivePacket.TYPE,
+                VeinMinerActivePacket.STREAM_CODEC,
+                VeinMinerActivePacket::handle
+        );
 
-        INSTANCE.registerMessage(id++, VeinMinerChargePacket.class, VeinMinerChargePacket::encode, VeinMinerChargePacket::new, VeinMinerChargePacket::handle);
-        INSTANCE.registerMessage(id++, VeinMinerActivePacket.class, VeinMinerActivePacket::encode, VeinMinerActivePacket::new, VeinMinerActivePacket::handle);
-        INSTANCE.registerMessage(id++, VeinMinerBreakPacket.class, VeinMinerBreakPacket::encode, VeinMinerBreakPacket::new, VeinMinerBreakPacket::handle);
+        registrar.playToClient(
+                VeinMinerBreakPacket.TYPE,
+                VeinMinerBreakPacket.STREAM_CODEC,
+                VeinMinerBreakPacket::handle
+        );
     }
 
-    public static void sendToPlayer(Object packet, ServerPlayer player) {
-        INSTANCE.sendTo(packet, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    public static void sendToPlayer(ServerPlayer player, CustomPacketPayload packet) {
+        PacketDistributor.sendToPlayer(player, packet);
     }
 
-    public static void sendToServer(Object packet) {
-        INSTANCE.sendToServer(packet);
+    public static void sendToServer(CustomPacketPayload packet) {
+        PacketDistributor.sendToServer(packet);
     }
 }

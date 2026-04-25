@@ -1,6 +1,6 @@
 {
-    "gui.exoveinmine.charge_amount": "Charge: %s blocks",
-    "gui.exoveinmine.charge_rate": "Rate: %s blocks/sec",
+    "gui.exoveinmine.charge_amount": "⚡ %s blocks",
+    "gui.exoveinmine.charge_rate": "⌚ %s/sec",
 
     "attribute.exoveinmine.vein_miner_efficiency": "Vein Miner Efficiency",
     "attribute.exoveinmine.vein_miner_charge": "Vein Miner Charge",
@@ -28,5 +28,7 @@
     "enchantment.exoveinmine.vein_miner.description": "Allows access to vein mining with the tool. At 2nd level, drops from vein mining are given to the player directly",
 
     "key.categories.exoveinmine": "Vein Miner",
-    "key.exoveinmine.activate": "Activate Vein Miner"
+    "key.exoveinmine.activate": "Activate Vein Miner",
+
+    "error.exoveinmine.tool_required": "You need a tool to vein mine."
 }

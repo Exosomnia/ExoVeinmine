@@ -1,37 +1,35 @@
 package com.exosomnia.exoveinmine.networking.packets;
 
 import com.exosomnia.exoveinmine.ExoVeinMine;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.function.Supplier;
+public record VeinMinerActivePacket(boolean active) implements CustomPacketPayload {
 
-public class VeinMinerActivePacket {
+    public static final CustomPacketPayload.Type<VeinMinerActivePacket> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ExoVeinMine.MODID, "vein_mine_active_packet"));
 
-    private boolean active = false;
+    public static final StreamCodec<RegistryFriendlyByteBuf, VeinMinerActivePacket> STREAM_CODEC =
+            StreamCodec.composite(
+                    ByteBufCodecs.BOOL,
+                    VeinMinerActivePacket::active,
+                    VeinMinerActivePacket::new
+            );
 
-    public VeinMinerActivePacket(boolean active) {
-        this.active = active;
+    @Override
+    public CustomPacketPayload.Type<VeinMinerActivePacket> type() {
+        return TYPE;
     }
 
-    public VeinMinerActivePacket(FriendlyByteBuf buffer) {
-        active = buffer.readBoolean();
-    }
-
-    public static void encode(VeinMinerActivePacket packet, FriendlyByteBuf buffer) {
-        buffer.writeBoolean(packet.active);
-    }
-
-    public static void handle(VeinMinerActivePacket packet, Supplier<NetworkEvent.Context> context) {
-        context.get().enqueueWork(() -> {
-            NetworkDirection packetDirection = context.get().getDirection();
-            if (packetDirection.equals(NetworkDirection.PLAY_TO_SERVER)) {
-                ServerPlayer player = context.get().getSender();
-                if (player != null) { ExoVeinMine.VEIN_MINER_MANAGER.setPlayerActive(player.getUUID(), packet.active); }
-            }
+    public static void handle(VeinMinerActivePacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            ExoVeinMine.VEIN_MINER_MANAGER.setPlayerActive(player.getUUID(), packet.active);
         });
-        context.get().setPacketHandled(true);
     }
 }

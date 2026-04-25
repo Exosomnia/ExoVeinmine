@@ -1,41 +1,35 @@
 package com.exosomnia.exoveinmine.networking.packets;
 
-import com.exosomnia.exoveinmine.capabilities.veinminer.VeinMinerProvider;
+import com.exosomnia.exoveinmine.ExoVeinMine;
+import com.exosomnia.exoveinmine.RegistrationHandler;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.function.Supplier;
+public record VeinMinerChargePacket(float charge) implements CustomPacketPayload {
 
-public class VeinMinerChargePacket {
+    public static final CustomPacketPayload.Type<VeinMinerChargePacket> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ExoVeinMine.MODID, "vein_mine_charge_packet"));
 
-    private float charge = 0.0F;
+    public static final StreamCodec<RegistryFriendlyByteBuf, VeinMinerChargePacket> STREAM_CODEC =
+            StreamCodec.composite(
+                    ByteBufCodecs.FLOAT,
+                    VeinMinerChargePacket::charge,
+                    VeinMinerChargePacket::new
+            );
 
-    public VeinMinerChargePacket(float charge) {
-        this.charge = charge;
+    @Override
+    public CustomPacketPayload.Type<VeinMinerChargePacket> type() {
+        return TYPE;
     }
 
-    public VeinMinerChargePacket(FriendlyByteBuf buffer) {
-        charge = buffer.readFloat();
-    }
-
-    public static void encode(VeinMinerChargePacket packet, FriendlyByteBuf buffer) {
-        buffer.writeFloat(packet.charge);
-    }
-
-    public static void handle(VeinMinerChargePacket packet, Supplier<NetworkEvent.Context> context) {
-        context.get().enqueueWork(() -> {
-            NetworkDirection packetDirection = context.get().getDirection();
-            if (packetDirection.equals(NetworkDirection.PLAY_TO_CLIENT)) {
-                Minecraft.getInstance().player.getCapability(VeinMinerProvider.VEIN_MINER).ifPresent(veinData -> {
-                    veinData.setCharge(packet.charge);
-                    /*if (veinData.getCharge() >= 1000.0F) {
-                        Minecraft.getInstance().player.playSound(RegistrationHandler.SOUND_VEIN_MINER_CHARGED.get(), 0.75f, 1.0f);
-                    } //Gets annoying, so it's removed. */
-                });
-            }
+    public static void handle(VeinMinerChargePacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Minecraft.getInstance().player.setData(RegistrationHandler.VEIN_MINER_DATA, (double)packet.charge);
         });
-        context.get().setPacketHandled(true);
     }
 }

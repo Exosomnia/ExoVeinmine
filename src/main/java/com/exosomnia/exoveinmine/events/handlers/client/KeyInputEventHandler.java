@@ -1,18 +1,19 @@
 package com.exosomnia.exoveinmine.events.handlers.client;
 
 import com.exosomnia.exoveinmine.ExoVeinMine;
-import com.exosomnia.exoveinmine.RegistrationHandlerClient;
+import com.exosomnia.exoveinmine.client.RegistrationHandlerClient;
 import com.exosomnia.exoveinmine.networking.PacketHandler;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerActivePacket;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.InputEvent;
 
-@Mod.EventBusSubscriber(modid = ExoVeinMine.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+
+@EventBusSubscriber(modid = ExoVeinMine.MODID, value = Dist.CLIENT)
 public class KeyInputEventHandler {
 
     @SubscribeEvent

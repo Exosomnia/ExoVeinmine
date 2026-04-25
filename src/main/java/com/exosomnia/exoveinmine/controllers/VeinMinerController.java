@@ -2,16 +2,16 @@ package com.exosomnia.exoveinmine.controllers;
 
 import com.exosomnia.exoveinmine.Config;
 import com.exosomnia.exoveinmine.RegistrationHandler;
-import com.exosomnia.exoveinmine.capabilities.veinminer.IVeinMinerStorage;
-import com.exosomnia.exoveinmine.capabilities.veinminer.VeinMinerProvider;
-import com.exosomnia.exoveinmine.capabilities.veinminer.VeinMinerStorage;
 import com.exosomnia.exoveinmine.events.VeinMiningBreakEvent;
 import com.exosomnia.exoveinmine.networking.PacketHandler;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerBreakPacket;
 import com.exosomnia.exoveinmine.networking.packets.VeinMinerChargePacket;
+import com.exosomnia.exoveinmine.util.VeinMineHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
@@ -19,6 +19,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
@@ -29,7 +31,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 
 import java.util.*;
 
@@ -72,6 +74,7 @@ public class VeinMinerController {
     private final ItemStack item;
     private final ServerLevel level;
     private final Block block;
+    private final Vec3 initialPos;
 
     //Iteration and search related variables
     private final ArrayDeque<BlockPos> blocksToSearch = new ArrayDeque<>(27);
@@ -101,6 +104,7 @@ public class VeinMinerController {
         this.noItem = item.isEmpty();
         this.item = item;
         this.level = level;
+        this.initialPos = position.getCenter();
 
         remainingPos = position;
         blocksSearched.add(position);
@@ -114,19 +118,17 @@ public class VeinMinerController {
      * @return true if iteration should continue, false otherwise.
      */
     public boolean iterate() {
-        IVeinMinerStorage data = player.getCapability(VeinMinerProvider.VEIN_MINER).resolve().orElse(new VeinMinerStorage(0.0));
-        if (!setupIteration(data)) return false;
+        if (!setupIteration(player.getData(RegistrationHandler.VEIN_MINER_DATA))) return false;
 
         IterationResult result = processIteration();
         blocksToSearch.addAll(blocksNextSearch);
         blocksNextSearch.clear();
 
         if (isEnhanced && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !level.restoringBlockSnapshots) {
-            Vec3 playerPos = player.position();
             drops.forEach(drop -> {
                 if (!drop.isEmpty()) {
-                    ItemEntity dropEntity = new ItemEntity(level, playerPos.x, playerPos.y + EntityType.ITEM.getHeight(), playerPos.z, drop);
-                    dropEntity.setPickUpDelay(3);
+                    ItemEntity dropEntity = new ItemEntity(level, initialPos.x, initialPos.y, initialPos.z, drop);
+                    dropEntity.setPickUpDelay(5);
                     level.addFreshEntity(dropEntity);
                 }
             });
@@ -134,8 +136,8 @@ public class VeinMinerController {
         }
 
         if (Config.enableCharge) {
-            data.setCharge(currentCharge);
-            PacketHandler.sendToPlayer(new VeinMinerChargePacket((float) currentCharge), player);
+            player.setData(RegistrationHandler.VEIN_MINER_DATA, currentCharge);
+            PacketHandler.sendToPlayer(player, new VeinMinerChargePacket((float) currentCharge));
         }
         return result.shouldContinue;
     }
@@ -143,17 +145,19 @@ public class VeinMinerController {
 
     /***
      * Sets up the current iteration and validates the controller.
-     * @param data IVeinMinerStorage of the player.
+     * @param charge charge of the player.
      * @return true if iteration should continue, false otherwise.
      */
-    private boolean setupIteration(IVeinMinerStorage data) {
+    private boolean setupIteration(double charge) {
+        Holder<Enchantment> veinMineEnchant = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(RegistrationHandler.VEIN_MINER_ENCHANTMENT);
+
         //Begin validation checks and setting of charge variables
         if (!(iterationsLeft-- > 0 && (!blocksToSearch.isEmpty() || remainingPos != null) && !player.isRemoved())) return false;
 
-        currentCharge = data.getCharge();
+        currentCharge = charge;
         chargePenalty = 0.0;
         if (Config.enableCharge) {
-            chargePenalty = Math.min(Double.MAX_VALUE, Config.chargePerBlock * (1.0 / player.getAttributeValue(RegistrationHandler.VEIN_MINER_EFFICIENCY.get())));
+            chargePenalty = Math.min(Double.MAX_VALUE, Config.chargePerBlock * (1.0 / player.getAttributeValue(RegistrationHandler.VEIN_MINER_EFFICIENCY)));
             if (currentCharge < chargePenalty) return false;
         }
 
@@ -163,16 +167,15 @@ public class VeinMinerController {
                 return false;
             }
         }
+
         //Checks complete, set remaining variables
         else {
-            fortuneLevel = item.getEnchantmentLevel(Enchantments.BLOCK_FORTUNE);
-            silkTouchLevel = item.getEnchantmentLevel(Enchantments.SILK_TOUCH);
+            fortuneLevel = item.getEnchantmentLevel(level.registryAccess().lookup(Registries.ENCHANTMENT).get().getOrThrow(Enchantments.FORTUNE));
+            silkTouchLevel = item.getEnchantmentLevel(level.registryAccess().lookup(Registries.ENCHANTMENT).get().getOrThrow(Enchantments.SILK_TOUCH));
         }
 
         isCreative = player.gameMode.getGameModeForPlayer().equals(GameType.CREATIVE);
-        isEnhanced = Config.globalEnhanced ||
-                     player.getTags().contains(Config.tagNameEnhanced) ||
-                     (Config.enableEnchant && item.getEnchantmentLevel(RegistrationHandler.VEIN_MINER_ENCHANTMENT.get()) >= RegistrationHandler.VEIN_MINER_ENCHANTMENT.get().getMaxLevel());
+        isEnhanced = VeinMineHelper.checkEnhanced(player, level);
         lootParams = new LootParams.Builder(level).withParameter(LootContextParams.TOOL, item).withOptionalParameter(LootContextParams.THIS_ENTITY, player).withLuck(player.getLuck());
 
         return true;
@@ -204,26 +207,30 @@ public class VeinMinerController {
                 if (!searchState.is(block)) continue;
 
                 //If the item stack that initiated this vein mine doesn't have enough durability left, stop the action.
-                if ((!isCreative) && (item.hurt(Config.durabilityDamage, level.random, player))) {
-                    item.setDamageValue(item.getMaxDamage() - 1);
-                    return new IterationResult(false, exp);
+                if (!isCreative && item.isDamageableItem()) {
+                    int damage = EnchantmentHelper.processDurabilityChange(level, item, Config.durabilityDamage);
+                    if (item.getMaxDamage() - item.getDamageValue() <= damage) {
+                        item.setDamageValue(item.getMaxDamage() - 1);
+                        return new IterationResult(false, exp);
+                    }
+                    item.setDamageValue(item.getDamageValue() + damage);
                 }
 
                 VeinMiningBreakEvent event = new VeinMiningBreakEvent(level, searchPos, searchState, player);
-                MinecraftForge.EVENT_BUS.post(event);
+                NeoForge.EVENT_BUS.post(event);
                 if (event.isCanceled()) continue;
 
                 //We have made it past all checks, remove charge, and break the block
                 currentCharge -= chargePenalty;
                 BlockEntity searchBlockEntity = searchState.hasBlockEntity() ? level.getBlockEntity(searchPos) : null;
                 player.awardStat(Stats.BLOCK_MINED.get(block));
-                player.causeFoodExhaustion(Config.exhaustionAmount);
+                if (!(Config.enchantNegatesExhaustion && VeinMineHelper.hasEnchantment(item, level))) player.causeFoodExhaustion(Config.exhaustionAmount);
                 if (!searchState.requiresCorrectToolForDrops() || item.isCorrectToolForDrops(searchState)) {
                     if (isEnhanced) {
                         drops.addAll(searchState.getDrops(lootParams.withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(searchPos)).withOptionalParameter(LootContextParams.BLOCK_ENTITY, searchBlockEntity)));
-                        exp += searchState.getExpDrop(level, level.random, searchPos, fortuneLevel, silkTouchLevel);
+                        exp += searchState.getExpDrop(level, searchPos, searchBlockEntity, player, item);
                     } else {
-                        Block.dropResources(searchState, level, searchPos, searchBlockEntity, player, item, true);
+                        Block.dropResources(searchState, level, searchPos, searchBlockEntity, player, item);
                     }
                 }
                 if (level.removeBlock(searchPos, false)) {
@@ -253,7 +260,7 @@ public class VeinMinerController {
     private void sendVisualEffects(BlockPos origin, List<BlockPos> positions) {
         VeinMinerBreakPacket packet = new VeinMinerBreakPacket(Block.getId(block.defaultBlockState()), origin, positions);
         for (ServerPlayer player : level.players()) {
-            if (player.distanceToSqr(origin.getCenter()) < VISUAL_EFFECT_RANGE) PacketHandler.sendToPlayer(packet, player);
+            if (player.distanceToSqr(origin.getCenter()) < VISUAL_EFFECT_RANGE) PacketHandler.sendToPlayer(player, packet);
         }
     }
 }
